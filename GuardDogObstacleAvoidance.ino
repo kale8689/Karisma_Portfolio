@@ -1,3 +1,6 @@
+// This is the Arduino IDE code to control the Robot Guard Dog I made for my Electronics
+// Design Class. This code controls the four motor pins, an ultrasonic sensor pin (obstacle
+// avoidance), and speaker pin.
 // Motor control pins
 const int motor1Pin1 = 7;  // Motor 1 input 1
 const int motor1Pin2 = 8;  // Motor 1 input 2
@@ -7,6 +10,9 @@ const int motor2Pin2 = 12;  // Motor 2 input 2
 // Ultrasonic sensor pins
 const int trigPin = 6;  // Trigger pin
 const int echoPin = 10; // Echo pin
+
+// Speaker pin
+const int speakPin = 9; // Speaker pin
 
 // Variables for distance measurement
 long duration;
@@ -47,6 +53,9 @@ void loop() {
     // Stop the car
     stopCar();
 
+    // Bark at "intruder" and scare them away
+    barkAndWiggle(1000);
+
     // Reverse for a short time
     reverseCar();
     delay(1000);  // Reverse for 1 second
@@ -64,6 +73,31 @@ void loop() {
   }
 
   delay(100);  // Small delay before next reading
+}
+
+// Function for guard dog to "bark and fight"
+void barkAndWiggle(unsigned long durationMs) {
+  unsigned long startTime = millis();
+  bool turnDir = false;
+  int pitch = 800;   // starting pitch (Hz)
+  while (millis() - startTime < durationMs) {
+
+    // Speaker ON with changing pitch
+    tone(speakPin, pitch);
+
+    // Alternate turning
+    if (turnDir) {
+      turnLeft();
+    } else {
+      turnRight();
+    }
+    turnDir = !turnDir;   // flip direction
+    pitch += 100;         // change pitch
+    if (pitch > 2000) pitch = 800;  // reset pitch range
+    delay(100);  // how fast it "fights" (goes right to left)
+  }
+  noTone(speakPin); // turn speaker off
+  stopCar();
 }
 
 // Function to move the car forward
@@ -97,3 +131,12 @@ void turnRight() {
   digitalWrite(motor2Pin1, LOW);
   digitalWrite(motor2Pin2, LOW);
 }
+
+// Function to turn the car left
+void turnLeft() {
+  digitalWrite(motor1Pin1, LOW);
+  digitalWrite(motor1Pin2, HIGH);
+  digitalWrite(motor2Pin1, LOW);
+  digitalWrite(motor2Pin2, LOW);
+}
+
