@@ -1,8 +1,10 @@
+// to start code use g++ -std=c++17 dnaProjectFunctions.cpp and ./a.out
 #include <iostream>
 #include <string>
 using namespace std;
 
 // Question One
+// Check if DNA nucleotide bases are a valid base
 bool isValidBase(char base){
     // only A,G,T,C valid nucleotide values
     if(base == 'A' || base == 'G' || base == 'T' || base == 'C'){
@@ -15,6 +17,7 @@ bool isValidBase(char base){
 }
 
 // Question Two
+// Check if DNA strand contains only valid bases
 bool isValidStrand(string strand){
     // strand is empty false
     if(strand.empty()){
@@ -33,6 +36,7 @@ bool isValidStrand(string strand){
 }
 
 // Question Three
+// Calculate the similarity between two sequences of the same length
 double strandSimilarity(string strand1, string strand2){
     // declare variables
     double count = 0.0, similarity = 0.0;
@@ -52,6 +56,7 @@ double strandSimilarity(string strand1, string strand2){
 }
 
 // Question Four
+// Calculate the best similarity between two sequences of either equal or unequal length
 int bestStrandMatch(string input_strand, string target_strand){
     // defining variables
     double highestSimilarity = 0.0, similarity = 0.0;
@@ -80,6 +85,7 @@ int bestStrandMatch(string input_strand, string target_strand){
 }
 
 // Question Five
+// Identify mutations
 void identifyMutations(string input_strand, string target_strand){
     // declare variables
     string longest_strand, shorter_strand;
@@ -182,6 +188,7 @@ for(int j = 0; j < totalStrandLength; j++){
 }
 
 // Question Six
+// Transcribe DNA to RNA
 void transcribeDNAtoRNA(string strand){
     // loops through each index and changes T to U
     for(int i = 0; i < strand.length(); i++){
@@ -194,6 +201,7 @@ void transcribeDNAtoRNA(string strand){
 }
 
 // Question Seven
+// Find the reverse complement of a DNA sequence
 void reverseComplement(string strand){
     string complement = "";
     // loops through every index but backwards and inputs char into new complement string
@@ -220,6 +228,7 @@ void reverseComplement(string strand){
 }
 
 // Question Eight
+// Extract coding frames
 void getCodingFrames(string strand){
     // declaring variables and all the stop and start codons
     string frame = "";
@@ -256,6 +265,7 @@ void getCodingFrames(string strand){
 }
 
 // Question Nine THE MENU
+// main menu that will ask you what you want to do with your data strand
 int main() {
     // declaring variables
     int input = 0;
@@ -383,4 +393,5 @@ int main() {
                 cout << "Invalid input. Please select a valid option." << endl;
         }
     } while (input <= 8);
+
 } 
