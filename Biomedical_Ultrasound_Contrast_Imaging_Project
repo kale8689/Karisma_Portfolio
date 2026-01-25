@@ -1,0 +1,295 @@
+% This project used MATLAB to analyze ultrasound images of microbubbles in blood vessels. Multiple different signal techniques 
+% were used such as the fourier transform, converting RF to B-Mode images, and writeVideo. These techniques were used to
+% increase contrast in the image for better analysis. 
+% Question One: Using the first frame in time, B-mode images were generated  for each of the four transmission types by applying 
+% standard envelope detection and log compression to the RF signals.
+clear; close all; clc;
+% mat is also in github
+load('contrast_data.mat');
+whos
+%single frame
+frame = 1;
+%Extract pulses
+pulse_1 = squeeze(rf(:,:,1,frame)); %positive half amplitude
+pulse_2 = squeeze(rf(:,:,2,frame)); %positive full amplitude
+pulse_3 = squeeze(rf(:,:,3,frame)); %negative full amplitude
+pulse_4 = squeeze(rf(:,:,4,frame)); %positive half amplitude 2
+
+%convert RF to B-Mode
+bModeImage = @(rfIm) 20*log10(abs(hilbert(rfIm))+eps);
+% Convert each pulse to B-Mode images
+bModePulse1 = bModeImage(pulse_1);
+bModePulse2 = bModeImage(pulse_2);
+bModePulse3 = bModeImage(pulse_3);
+bModePulse4 = bModeImage(pulse_4);
+%dynamic range
+dr = [-60 0];
+figure;
+% Display B-Mode images for each pulse
+subplot(2,2,1)
+imagesc(x*1000, z*1000, bModePulse1,max(bModePulse1(:)) + dr)
+axis image; colormap gray
+title('Positive Half Amplitude');
+xlabel('Lateral(mm)')
+ylabel('Axial(mm)')
+subplot(2,2,2)
+imagesc(x*1000, z*1000, bModePulse2, max(bModePulse2(:)) + dr)
+axis image; colormap gray
+title('Positive Full Amplitude');
+xlabel('Lateral(mm)')
+ylabel('Axial(mm)')
+subplot(2,2,3)
+imagesc(x*1000, z*1000, bModePulse3, max(bModePulse3(:)) + dr)
+axis image; colormap gray
+title('Negative Full Amplitude');
+xlabel('Lateral(mm)')
+ylabel('Axial(mm)')
+subplot(2,2,4)
+imagesc(x*1000, z*1000, bModePulse4, max(bModePulse4(:)) + dr)
+axis image; colormap gray
+title('Positive Half Amplitude 2');
+xlabel('Lateral(mm)')
+ylabel('Axial(mm)')
+
+
+% Question Two: Comparing RF Signals at One Lateral Position for the Four Pulses helps confirm whether the four 
+% pulses were transmitted correctly. 
+middle = round(length(x)/2);
+%pick frame
+t=1;
+% Extract the selected RF signals for the chosen frame
+rfSignal1 = squeeze(rf(:,middle,1,t)); %positive half
+rfSignal2 = squeeze(rf(:,middle,2,t)); %positive full
+rfSignal3 = squeeze(rf(:,middle,3,t)); %negative full
+rfSignal4 = squeeze(rf(:,middle,4,t)); %positive full 2
+%plot
+figure;
+plot(z*1000, rfSignal1); hold on;
+plot(z*1000, rfSignal2);
+plot(z*1000, rfSignal3);
+plot(z*1000, rfSignal4);
+hold off;
+xlabel('Depth (mm)');
+ylabel('RF Signal Amplitude');
+title('RF Signals at Middle Position');
+legend('Positive Half', 'Positive Full', 'Negative Full', 'Positive Full 2');
+%corrected amplitudes
+% Correct the amplitudes of the RF signals
+correctedSignal1 = rfSignal1*2;
+correctedSignal2 = rfSignal2;
+correctedSignal3 = -rfSignal3;
+correctedSignal4 = rfSignal4*2;
+% Plot corrected RF signals
+figure;
+plot(z*1000, correctedSignal1); hold on;
+plot(z*1000, correctedSignal2);
+plot(z*1000, correctedSignal3);
+plot(z*1000, correctedSignal4);
+hold off;
+xlabel('Depth (mm)');
+ylabel('Corrected RF Signal Amplitude');
+title('Corrected RF Signals at Middle Position');
+legend('Corrected Positive Half', 'Corrected Positive Full', 'Corrected Negative Full', 'Corrected Positive Full 2');
+
+
+% Question Three: Approximate sampling rate(Hz) To further check if the four pulses were transmitted correctly, the amplitudes 
+% were normalized. The two half amplitude pulses were multiplied by a factor of two and the full negative amplitude was multiplied 
+% by a factor of negative one. After this correction, all four pulses were
+% plotted in the same graph. To check whether the four pulses produce the same frequency response, the fourier transform was taken 
+% for each signal. This also helps confirm that the pulses were transmitted correctly and any differences between them is from the 
+% amplitudes and not due to changes in frequency.
+
+dz=z(2)-z(1);
+fs = c/(2*dz);
+%RF Traces
+rf_trace1=squeeze(rf(:,middle,1,frame)); %positive half amplitude
+rf_trace2=squeeze(rf(:,middle,2,frame)); %positive full amplitude
+rf_trace3=squeeze(rf(:,middle,3,frame)); %negative full amplitude
+rf_trace4=squeeze(rf(:,middle,4,frame)); %positive half amplitude 2
+%Number of Samples
+N = length(rf_trace1); % Number of samples for FFT
+%Frequency axis
+f=(0:N-1)*(fs/N);
+% Compute FFT for each RF trace
+rf_fft1 = fft(rf_trace1);
+rf_fft2 = fft(rf_trace2);
+rf_fft3 = fft(rf_trace3);
+rf_fft4 = fft(rf_trace4);
+%Plot FFT spectra
+figure;
+plot(f/1e6, abs(rf_fft1), 'LineWidth', 1.2); hold on;
+plot(f/1e6, abs(rf_fft2), 'LineWidth', 1.2);
+plot(f/1e6, abs(rf_fft3), 'LineWidth', 1.2);
+plot(f/1e6, abs(rf_fft4), 'LineWidth', 1.2);
+xlabel('Frequency(MHz)');
+ylabel('Magnitude');
+title('Fourier Transform of RF Signal');
+legend('Positive Half', 'Positive Full', 'Negative Full', 'Positive Half Amplitude 2');
+xlim([0 fs/2/1e6]);
+%Amplitude Correction
+correctedsignal1_fft = fft(correctedSignal1);
+correctedsignal2_fft = fft(correctedSignal2);
+correctedsignal3_fft = fft(correctedSignal3);
+correctedsignal4_fft = fft(correctedSignal4);
+figure;
+plot(f/1e6, abs(correctedsignal1_fft), 'LineWidth', 1.2); hold on;
+plot(f/1e6, abs(correctedsignal2_fft), 'LineWidth', 1.2);
+plot(f/1e6, abs(correctedsignal3_fft), 'LineWidth', 1.2);
+plot(f/1e6, abs(correctedsignal4_fft), 'LineWidth', 1.2);
+hold off;
+xlabel('Frequency (MHz)');
+ylabel('Magnitude');
+title('Fourier Transform of Amplitude Corrected RF Signals');
+legend('Corrected Positive Half', 'Corrected Positive Full', 'Corrected Negative Full', 'Corrected Positive Full 2');
+xlim([0 fs/2/1e6]);
+grid on;
+
+
+% Question Four: Pulse inversion and Amplitude modulation methods aim to cancel the linear part of the echoes so that only the
+% non-linear components of the microbubble remain. The Pulse Inversion (PI) RF was formed using the average of the full positive 
+% and full negative pulses. 
+frame =1;
+mid = round(length(x)/2);
+%Pulses for the chosen frame
+pulse2 = squeeze(rf(:,:,2,frame)); %+ve full amplitude
+pulse3 = squeeze(rf(:,:,3,frame)); %-ve full amplitude
+%pulse inversion
+PI_rf = 0.5*(pulse2+pulse3);
+%B-mode Image
+envelope_PI = abs(hilbert(PI_rf)); %analytic envelope
+Bmode_PI = 20*log10(envelope_PI+eps); %log compression
+% Display B-mode image with pulse inversion
+figure;
+imagesc(x*1000, z*1000, Bmode_PI, [max(Bmode_PI(:))-60 max(Bmode_PI(:))]);
+axis image; colormap gray; colorbar;
+title('B-mode Image with Pulse Inversion');
+xlabel('Lateral (mm)');
+ylabel('Axial (mm)');
+
+% Amplitude Correction
+%Sampling Frequency
+fs = c/(2*dz); %Hz
+fprintf('Estimated RF Sampling Frequency: %.3f MHz\n', fs/1e6);
+%Estimated RF Sampling Frequency: 30.800 MHz
+pulse1_AM = squeeze(rf(:,:,1,frame)); %half +ve
+pulse2_AM = squeeze(rf(:,:,2,frame)); %full +ve
+pulse4_AM = squeeze(rf(:,:,4,frame)); %half +ve
+
+%Amplitude Modulation Combination: The Amplitude Modulation (AM) RF signal was formed 
+% by subtracting the two half amplitude pulses from the 
+% positive full amplitude pulse and dividing by 3. 
+AM_RF =(pulse2_AM-pulse1_AM-pulse4_AM)/3;
+%envelope detection
+envelope_AM = abs(hilbert(AM_RF));
+Bmode_AM = 20*log10(envelope_AM + eps);
+figure;
+imagesc(x*1000, z*1000, Bmode_AM, [max(Bmode_AM(:))-60 max(Bmode_AM(:))]);
+axis image; colormap gray; colorbar;
+title('B-mode Image with Amplitude Modulation');
+xlabel('Lateral (mm)');
+ylabel('Axial (mm)');
+
+
+
+%Pulse Inversion + Amplitude Modulation Combination: The AM+PI combination uses features from both 
+% AM and PI and was formed using the average of the negative full amplitude and the two half amplitude's signals.
+assert(isequal(size(pulse3), size(pulse1_AM), size(pulse4_AM))); %RF inputs must have the same dimensions
+RF_AMPI = (pulse3 + pulse1_AM + pulse4_AM)/3;
+%envelope detection
+en_AMPI = abs(hilbert(RF_AMPI));
+% Display the envelope of the Pulse Inversion + Amplitude Modulation combination
+Bmode_AMPI = 20*log10(en_AMPI + eps);
+figure;
+imagesc(x*1000, z*1000, Bmode_AMPI, [max(Bmode_AMPI(:))-60 max(Bmode_AMPI(:))]);
+axis image; colormap gray; colorbar;
+title('B-mode Image with Pulse Inversion and Amplitude Modulation');
+xlabel('Lateral (mm)');
+ylabel('Axial (mm)');
+
+% Question Five: Two movies were created using VideoWriter in MATLAB. The first movie showed 150 frames in 
+% length of B-mode image pulse inversion and amplitude modulation.
+clear; close all; clc;
+load('contrast_data.mat');
+
+bModeImage = @(rfIm) 20*log10(abs(hilbert(rfIm)) + eps);
+dr = [-60 0];
+nFrames = size(rf, 4);
+%Using VideoWriter to create pulse inversion & amplitude modulation
+v = VideoWriter('ContrastMovie_PIAM.avi');
+v.FrameRate = 15;
+open(v);
+
+figure('Position', [100 100 600 600]);
+
+for t = 1:nFrames
+pulse1_AM = squeeze(rf(:,:,1,t));
+pulse3 = squeeze(rf(:,:,3,t));
+pulse4_AM = squeeze(rf(:,:,4,t));
+
+RF_PIAM = (pulse3 + pulse1_AM + pulse4_AM)/3;
+Bmode_PIAM = bModeImage(RF_PIAM);
+maxVal = max(Bmode_PIAM(:));
+
+imagesc(x*1000, z*1000, Bmode_PIAM, maxVal + dr);
+axis image; colormap gray; colorbar;
+xlabel('Lateral (mm)');
+ylabel('Axial (mm)');
+title(sprintf('B-mode Image with Pulse Inversion and Amplitude Modulation — Frame %d', t));
+
+frame = getframe(gcf);
+writeVideo(v, frame);
+end
+close(v);
+disp('Movie saved as ContrastMovie_PIAM.avi');
+%opening video
+implay('ContrastMovie_PIAM.avi');
+% The second movie was 150 frames in length of AMPI minus the background echoes.
+% subtracting mean envelope to remove stationary echoes
+nFrames = size(rf,4);
+nz = length(z);
+nx = length(x);
+dr = [-60 0];
+
+envStack = zeros(nz, nx, nFrames);
+
+for t = 1:nFrames
+pulse1_AM = squeeze(rf(:,:,1,t));
+pulse3 = squeeze(rf(:,:,3,t));
+pulse4_AM = squeeze(rf(:,:,4,t));
+
+RF_PIAM = (pulse3 + pulse1_AM + pulse4_AM) / 3;
+
+envStack(:,:,t) = abs(hilbert(RF_PIAM));
+end
+
+meanEnv = mean(envStack, 3);
+
+envStack_sub = zeros(size(envStack));
+for t = 1:nFrames
+envStack_sub(:,:,t) = envStack(:,:,t) - meanEnv;
+end
+
+v2 = VideoWriter('ContrastMovie_PIAM_bgSub.avi');
+v2.FrameRate = 15;
+open(v2);
+
+figure('Position', [200 200 600 600]);
+
+for t = 1:nFrames
+env_sub = max(envStack_sub(:,:,t), 0);
+bMode_sub = 20*log10(env_sub + eps);
+maxVal_sub = max(bMode_sub(:));
+
+imagesc(x*1e3, z*1e3, bMode_sub, maxVal_sub + dr);
+axis image; colormap gray;
+xlabel('Lateral (mm)');
+ylabel('Axial (mm)');
+title(sprintf('AMPI minus Background — Frame %d', t));
+
+frame = getframe(gcf);
+writeVideo(v2, frame);
+end
+close(v2);
+%play movie
+implay('ContrastMovie_PIAM_bgSub.avi');
+
