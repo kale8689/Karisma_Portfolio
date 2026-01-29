@@ -1,6 +1,7 @@
 % This project used MATLAB to analyze ultrasound images of microbubbles in blood vessels. Multiple different signal techniques 
 % were used such as the fourier transform, converting RF to B-Mode images, and writeVideo. These techniques were used to
 % increase contrast in the image for better analysis. 
+% The 'contrast_data.mat' was too big to upload into github.
 % Question One: Using the first frame in time, B-mode images were generated  for each of the four transmission types by applying 
 % standard envelope detection and log compression to the RF signals.
 clear; close all; clc;
